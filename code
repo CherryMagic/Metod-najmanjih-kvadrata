@@ -1,18 +1,15 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include <vector>
-
+#include <fstream>
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using namespace std;
 
+//FUNKCIJA KOJA PROVERAVA DA LI MATRICA IMA NEGATIVNU SOPSTVENU VREDNOST
 bool hasNegEigenvalue (MatrixXd A){
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigensolver(A);
     if (eigensolver.info() != Eigen::Success){ abort(); return false;}
-    //std::cout << "The eigenvalues of A are:\n" << eigensolver.eigenvalues() << std::endl;
-    //std::cout << "Here's a matrix whose columns are eigenvectors of A \n"
-        //<< "corresponding to these eigenvalues:\n"
-        //<< eigensolver.eigenvectors() << std::endl;
     for (int i=0;i<eigensolver.eigenvalues().size();i++)
         if (eigensolver.eigenvalues()[i] < 0)
             return true;
@@ -21,13 +18,16 @@ bool hasNegEigenvalue (MatrixXd A){
 
 int main()
 {
-    int k, n, m, coupos=0, couneg=0;
-    cout << "Unesite broj clanova sume, dimenziju domena i dimenziju kodomena"<<endl;
-    cin >> k >> n >> m;
-    vector<int> pos, neg;
+    ifstream in;
+    in.open("in.txt");
+    if (in.is_open()){
+    //UCITAVAMO BROJ CLANOVA SUME, DIMENZIJU POLAZNOG I DIMENZIJU DOLAZNOG PROSTORA
+    int k, n, m;
+    in >> k >> n >> m;
     vector<double> alpha(k);
     vector<MatrixXd> A(k);
     vector<VectorXd> b(k);
+    //u Sym I Vec CUVAMO SIMETRICNU MATRICU I VEKTOR KOJi SE POJAVLJUJU U JEDNACINI f'=0
     MatrixXd Sym(m,m);
     VectorXd Vec(m);
     for (int i=0;i<m;i++){
@@ -36,132 +36,67 @@ int main()
         }
         Vec(i)=0;
     }
+    //UCITAVAMO k PUTA:
+    // alpha[i]
+    // A[i]
+    // b[i]
     for (int i=0;i<k;i++){
-        cout << "Unesite podatke o "<<i+1<<". clanu sume" <<endl;
-        cout << "Unesite alfa_"<<i+1<<endl;
-        cin >> alpha[i];
+        in >> alpha[i];
         A[i].resize(n,m);
         b[i].resize(n);
-        cout << "Unesite A_"<<i+1<<endl;
         for (int j=0;j<n;j++)
             for (int l=0;l<m;l++){
                 double x;
-                cin >> x;
+                in >> x;
                 A[i](j,l) = x;
             }
-        cout << "Unesite b_"<<i+1<<endl;
         for (int j=0;j<n;j++){
             double x;
-            cin >> x;
+            in >> x;
             b[i](j) = x;
         }
 
         Sym += alpha[i] * A[i].transpose() * A[i];
         Vec += alpha[i] * A[i].transpose() * b[i];
-        /*if (alpha[i] > 0){
-            Sym += alpha[i] * A[i].transpose() * A[i];
-            Vec += A[i].transpose() * b[i];
-            coupos ++;
-            pos.push_back(i);
-        }
-        if (alpha[i] < 0){
-            Sym -= A[i].transpose() * A[i];
-            Vec -= A[i].transpose() * b[i];
-            couneg++;
-            neg.push_back(i);
-        }*/
     }
 
-    /*MatrixXd PosMat(coupos*n, coupos*m);
-    for (int i=0;i<coupos*n;i++)
-        for (int j=0;j<coupos*m;j++)
-            PosMat(i,j) = 0;
-    MatrixXd NegMat(coupos*n, coupos*m);
-    for (int i=0;i<coupos*n;i++)
-        for (int j=0;j<coupos*m;j++)
-            NegMat(i,j) = 0;
-    VectorXd Posb(coupos*n), Negb(couneg*n);
-
-    for (int i=0;i<coupos;i++){
-        for (int j=0;j<n;j++){
-            for (int l=0;l<m;l++){
-                //cout << sqrt(alpha[pos[i]])<<endl;
-                //cout << A[pos[i]] (j, l) << endl;
-                PosMat(i*n + j, i*m + l) = sqrt(alpha[pos[i]]) * A[pos[i]] (j, l);
-            }
-        }
-        for (int j=0;j<n;j++){
-            Posb(i*n + j) = sqrt(alpha[pos[i]]) * (b[pos[i]](j));
-        }
-    }
-
-    for (int i=0;i<couneg;i++){
-        for (int j=0;j<n;j++){
-            for (int l=0;l<m;l++){
-                NegMat(i*n + j, i*m + l) = sqrt(-1*alpha[neg[i]]) * A[neg[i]] (j, l);
-            }
-        }
-        for (int j=0;j<n;j++){
-            Negb(i*n + j) = sqrt(-1*alpha[neg[i]]) * (b[neg[i]](j));
-        }
-    }
-    cout << PosMat<<endl;
-    cout << NegMat << endl;
-
-    MatrixXd Sym = PosMat.transpose() * PosMat - NegMat.transpose() * NegMat;
-    VectorXd Vec = PosMat.transpose() * Posb - NegMat.transpose() * Negb;
-
-    cout << Sym <<endl;
-    cout << Vec << endl;
-
-
-
-
-    MatrixXd A(3,3);
-    VectorXd b(3);
-    b << 1,2,3;
-    A(0,0) = 0;
-    A(0,1) = 0;
-    A(0,2) = 0;
-    A(1,0) = 0;
-    A(1,1) = 0;
-    A(1,2) = 0;
-    A(2,0) = 0;
-    A(2,1) = 0;
-    A(2,2) = 1;
-    cout << A << endl;*/
-
-    /*Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigensolver(Sym);
-    if (eigensolver.info() != Eigen::Success) abort();
-    std::cout << "The eigenvalues of Sym are:\n" << eigensolver.eigenvalues() << std::endl;
-    std::cout << "Here's a matrix whose columns are eigenvectors of Sym \n"
-        << "corresponding to these eigenvalues:\n"
-        << eigensolver.eigenvectors() << std::endl;*/
-
-    //cout << hasNegEigenvalue(Sym) << endl;
+    //AKO Sym NIJE POZITIVNO POLUDEFINITNA, NEMA KONACNOG MINIMUMA
     if (hasNegEigenvalue(Sym)){
         cout << endl<<"Infimum iznosi minus beskonacno" << endl;
+        cout << "Unesite bilo sta da napustite program" << endl;
+        string s;
+        cin >> s;
     }
     else{
+        // POZIVOM FUNKCIJE ISPOD DOBIJA SE X KOJE JE MOZDA RESENJE SISTEMA
+        // ZATIM VRACANJEM TOG X U JEDNACINU Sym*X = Vec PROVERAMO DA LI JE ZAISTA RESENJE
+        // Pot TREBA PO NORMI DA BUDE BLISKO NULI
         VectorXd X = Sym.ldlt().solve(Vec);
-        //cout << Sym << endl;
-        //cout << X <<endl;
-        //cout << Vec << endl;
         VectorXd Pot = Sym*X - Vec;
         double norm = 0;
         for (int i=0;i<k;i++)
             norm += Pot(i)*Pot(i);
         norm = sqrt(norm);
         if ( norm < 0.001 ){
-            /*double minvalue = (PosMat * X - Posb).dot( (PosMat * X - Posb).transpose() ) -
-                              (NegMat * X - Negb).dot( (NegMat * X - Negb).transpose() );*/
+            // UKOLIKO JE ZAISTA RESENJE, VRACAMO U f DA DOBIJEMO MINIMALNU VREDNOST
             double minvalue = 0;
             for (int i=0;i<k;i++){
                 minvalue += alpha[i] * (A[i] * X - b[i]).dot(A[i]*X - b[i]);
             }
             cout << "Infimum funkcije iznosi "<<minvalue<<" i postize se u:"<<endl<<X<<endl;
         }
+        //AKO SISTEM Sym*X = Vec NEMA RESENJA, ONDA IZVOD f-A NEMA NULA, PA NEMA NI KONACNOG INFIMUMA
         else cout << "Infimum iznosi minus beskonacno" << endl;
+        cout << "Unesite bilo sta da napustite program" << endl;
+        string s;
+        cin >> s;
+    }
+    }
+    else{
+        cout << "Neuspesno ucitavanje podataka" << endl;
+        cout << "Unesite bilo sta da napustite program" << endl;
+        string s;
+        cin >> s;
     }
     return 0;
 }
